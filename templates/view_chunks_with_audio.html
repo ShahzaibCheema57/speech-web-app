@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Chunks with Audio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #2980b9;
+        }
+        .nav a.active {
+            background-color: #e74c3c;
+        }
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .filter-group input, .filter-group select {
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e8880b;
+        }
+        .results-info {
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+        .chunks-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+            vertical-align: top;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .text-cell {
+            max-width: 400px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        .audio-cell {
+            min-width: 300px;
+        }
+        .audio-cell audio {
+            width: 100%;
+            max-width: 280px;
+        }
+        .info-cell {
+            min-width: 150px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .info-cell .chunk-id {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+        .info-cell .recorder {
+            color: #3498db;
+            font-weight: bold;
+        }
+        .info-cell .timestamp {
+            color: #95a5a6;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status-done {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+        }
+        .pagination a {
+            background-color: white;
+            color: #3498db;
+        }
+        .pagination a:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        .pagination .current {
+            background-color: #3498db;
+            color: white;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            color: #7f8c8d;
+        }
+        .empty-state h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+            }
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            table {
+                font-size: 0.9em;
+            }
+            th, td {
+                padding: 10px;
+            }
+            .text-cell {
+                max-width: 200px;
+            }
+            .audio-cell {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎵 Chunks with Audio</h1>
+        <p>View and listen to all completed recordings • Total: {{ total_count }}</p>
+    </div>
+
+    <div class="nav">
+        <a href="{{ url_for('admin_dashboard') }}">← Admin Dashboard</a>
+        <a href="{{ url_for('view_chunks') }}">Manage Chunks</a>
+        <a href="{{ url_for('view_chunks_with_audio') }}" class="active">View with Audio</a>
+        <a href="{{ url_for('view_stats') }}">📊 Statistics</a>
+        <a href="{{ url_for('add_chunk') }}">Add New Chunk</a>
+        <a href="{{ url_for('export_tsv') }}">Export Data</a>
+        <a href="{{ url_for('admin_logout') }}" style="background-color: #e74c3c;">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="filters">
+        <form method="GET">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" name="search" value="{{ search_query }}" 
+                           placeholder="Search text, chunk ID, or recorder name...">
+                </div>
+                <button type="submit" class="btn">Search</button>
+                <a href="{{ url_for('view_chunks_with_audio') }}" class="btn btn-warning">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    {% if chunks %}
+    <div class="results-info">
+        Showing {{ chunks|length }} of {{ total_count }} completed recordings with audio
+    </div>
+
+    <div class="chunks-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Chunk Info</th>
+                    <th>Text Content</th>
+                    <th>Audio Recording</th>
+                    <th>Recorder Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chunk in chunks %}
+                <tr>
+                    <td class="info-cell">
+                        <div class="chunk-id">ID: {{ chunk[0] }}</div>
+                        <div>Length: {{ chunk[7] if chunk[7] else 'N/A' }} chars</div>
+                        <span class="status-badge status-done">Completed</span>
+                    </td>
+                    <td class="text-cell">{{ chunk[1] }}</td>
+                    <td class="audio-cell">
+                        {% if chunk[4] %}
+                            <audio controls preload="none">
+                                <source src="{{ url_for('uploaded_file', filename=chunk[4].split('/')[-1]) }}" type="audio/wav">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div style="font-size: 0.8em; color: #7f8c8d; margin-top: 5px;">
+                                File: {{ chunk[4].split('/')[-1] }}
+                            </div>
+                        {% else %}
+                            <div style="color: #e74c3c; font-style: italic;">No audio file</div>
+                        {% endif %}
+                    </td>
+                    <td class="info-cell">
+                        <div class="recorder">{{ chunk[5] if chunk[5] else 'Unknown' }}</div>
+                        {% if chunk[6] %}
+                            <div class="timestamp">{{ chunk[6].strftime('%Y-%m-%d %H:%M') if chunk[6] else 'N/A' }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if has_prev %}
+            <a href="{{ url_for('view_chunks_with_audio', page=page-1, search=search_query) }}">« Previous</a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <span class="current">{{ p }}</span>
+            {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 2 and p <= page + 2) %}
+                <a href="{{ url_for('view_chunks_with_audio', page=p, search=search_query) }}">{{ p }}</a>
+            {% elif p == 4 and page > 6 %}
+                <span>...</span>
+            {% elif p == total_pages - 3 and page < total_pages - 5 %}
+                <span>...</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if has_next %}
+            <a href="{{ url_for('view_chunks_with_audio', page=page+1, search=search_query) }}">Next »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <h3>No Audio Recordings Found</h3>
+        <p>There are no completed recordings with audio files yet.</p>
+        <p><a href="{{ url_for('index') }}">Start recording</a> or <a href="{{ url_for('view_chunks') }}">manage chunks</a>.</p>
+    </div>
+    {% endif %}
+
+    <script>
+        // Add keyboard shortcuts for audio controls
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName.toLowerCase() !== 'input') {
+                const audios = document.querySelectorAll('audio');
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    // Toggle play/pause for the first audio element
+                    if (audios[0]) {
+                        if (audios[0].paused) {
+                            audios[0].play();
+                        } else {
+                            audios[0].pause();
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add loading indicators for audio
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.addEventListener('loadstart', function() {
+                this.nextElementSibling.innerHTML = 'Loading...';
+            });
+            audio.addEventListener('canplaythrough', function() {
+                const filename = this.nextElementSibling.innerHTML.replace('Loading...', '').replace('File: ', '');
+                this.nextElementSibling.innerHTML = `File: ${filename}`;
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Chunks</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #2980b9;
+        }
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .filter-group input, .filter-group select {
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-success {
+            background-color: #27ae60;
+        }
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e8880b;
+        }
+        .results-info {
+            margin-bottom: 20px;
+            color: #7f8c8d;
+        }
+        .chunks-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .text-cell {
+            max-width: 400px;
+            word-wrap: break-word;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-done {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-available {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+        }
+        .pagination a {
+            background-color: white;
+            color: #3498db;
+        }
+        .pagination a:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        .pagination .current {
+            background-color: #3498db;
+            color: white;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .update-form {
+            display: inline-flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .update-form select {
+            padding: 4px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>View & Manage Chunks</h1>
+        <p>Total chunks found: {{ total_count }}</p>
+    </div>
+
+    <div class="nav">
+        <a href="{{ url_for('admin_dashboard') }}">← Admin Dashboard</a>
+        <a href="{{ url_for('view_chunks_with_audio') }}">View with Audio</a>
+        <a href="{{ url_for('view_stats') }}">📊 Statistics</a>
+        <a href="{{ url_for('database_interface') }}">🗄️ Database</a>
+        <a href="{{ url_for('add_chunk') }}">Add New Chunk</a>
+        <a href="{{ url_for('bulk_add_chunks') }}">Bulk Add</a>
+        <a href="{{ url_for('admin_logout') }}" style="background-color: #e74c3c;">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="filters">
+        <form method="GET">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="Search text or chunk ID...">
+                </div>
+                <div class="filter-group">
+                    <label for="status">Status:</label>
+                    <select id="status" name="status">
+                        <option value="all" {{ 'selected' if status_filter == 'all' }}>All</option>
+                        <option value="available" {{ 'selected' if status_filter == 'available' }}>Available</option>
+                        <option value="pending" {{ 'selected' if status_filter == 'pending' }}>Pending</option>
+                        <option value="done" {{ 'selected' if status_filter == 'done' }}>Completed</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Filter</button>
+                <a href="{{ url_for('view_chunks') }}" class="btn btn-warning">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    {% if chunks %}
+    <div class="chunks-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Text</th>
+                    <th>Recording Status</th>
+                    <th>Pending Status</th>
+                    <th>Recorder</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chunk in chunks %}
+                <tr>
+                    <td>{{ chunk[0] }}</td>
+                    <td class="text-cell">{{ chunk[4] }}</td>
+                    <td>
+                        {% if chunk[2] == 'done' %}
+                            <span class="status-badge status-done">Completed</span>
+                        {% else %}
+                            <span class="status-badge status-available">Not Done</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if chunk[3] == 'yes' %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% else %}
+                            <span class="status-badge status-available">No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if chunk[6] %}
+                            <strong>{{ chunk[6] }}</strong>
+                            {% if chunk[5] %}
+                                <br><small style="color: #7f8c8d;">
+                                    <a href="{{ url_for('view_chunks_with_audio', search=chunk[0]) }}" title="Listen to audio">🎵</a>
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #bdc3c7;">Not recorded</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <form method="POST" action="{{ url_for('update_chunk_route', chunk_id=chunk[0]) }}" class="update-form">
+                            <select name="recording_status">
+                                <option value="done" {{ 'selected' if chunk[2] == 'done' }}>Done</option>
+                                <option value="not_done" {{ 'selected' if chunk[2] != 'done' }}>Not Done</option>
+                            </select>
+                            <select name="pending_status">
+                                <option value="yes" {{ 'selected' if chunk[3] == 'yes' }}>Yes</option>
+                                <option value="no" {{ 'selected' if chunk[3] != 'yes' }}>No</option>
+                            </select>
+                            <button type="submit" class="btn btn-success" style="font-size: 0.8em;">Update</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_chunk_route', chunk_id=chunk[0]) }}" style="display: inline;" 
+                              onsubmit="return confirm('Are you sure you want to delete chunk {{ chunk[0] }}?');">
+                            <button type="submit" class="btn btn-danger" style="font-size: 0.8em;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if has_prev %}
+            <a href="{{ url_for('view_chunks', page=page-1, search=search_query, status=status_filter) }}">« Previous</a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <span class="current">{{ p }}</span>
+            {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 2 and p <= page + 2) %}
+                <a href="{{ url_for('view_chunks', page=p, search=search_query, status=status_filter) }}">{{ p }}</a>
+            {% elif p == 4 and page > 6 %}
+                <span>...</span>
+            {% elif p == total_pages - 3 and page < total_pages - 5 %}
+                <span>...</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if has_next %}
+            <a href="{{ url_for('view_chunks', page=page+1, search=search_query, status=status_filter) }}">Next »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align: center; padding: 40px; background: white; border-radius: 10px;">
+        <h3>No chunks found</h3>
+        <p>Try adjusting your search criteria or <a href="{{ url_for('add_chunk') }}">add some chunks</a>.</p>
+    </div>
+    {% endif %}
+</body>
+</html> 

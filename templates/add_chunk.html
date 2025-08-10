@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Chunk</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #2980b9;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .form-group textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #27ae60;
+        }
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .help-text {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .char-counter {
+            color: #7f8c8d;
+            font-size: 12px;
+            text-align: right;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Add New Chunk</h1>
+        <p>Add a single text chunk to the database</p>
+    </div>
+
+    <div class="nav">
+        <a href="{{ url_for('admin_dashboard') }}">← Admin Dashboard</a>
+        <a href="{{ url_for('view_chunks') }}">View All Chunks</a>
+        <a href="{{ url_for('view_stats') }}">📊 Statistics</a>
+        <a href="{{ url_for('database_interface') }}">🗄️ Database</a>
+        <a href="{{ url_for('bulk_add_chunks') }}">Bulk Add</a>
+        <a href="{{ url_for('admin_logout') }}" style="background-color: #e74c3c;">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="form-container">
+        <form method="POST" id="add-chunk-form">
+            <div class="form-group">
+                <label for="text">Text Content:</label>
+                <textarea 
+                    id="text" 
+                    name="text" 
+                    placeholder="Enter the text that users will read and record..."
+                    required
+                    maxlength="5000"
+                ></textarea>
+                <div class="help-text">
+                    Enter the text that users will be asked to record. This should be clear and easy to read.
+                </div>
+                <div class="char-counter" id="char-counter">0 / 5000 characters</div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-success">Add Chunk</button>
+                <a href="{{ url_for('view_chunks') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Character counter functionality
+        const textarea = document.getElementById('text');
+        const charCounter = document.getElementById('char-counter');
+
+        function updateCharCount() {
+            const currentLength = textarea.value.length;
+            charCounter.textContent = `${currentLength} / 5000 characters`;
+            
+            if (currentLength > 4500) {
+                charCounter.style.color = '#e74c3c';
+            } else if (currentLength > 4000) {
+                charCounter.style.color = '#f39c12';
+            } else {
+                charCounter.style.color = '#7f8c8d';
+            }
+        }
+
+        textarea.addEventListener('input', updateCharCount);
+        textarea.addEventListener('keyup', updateCharCount);
+        textarea.addEventListener('paste', function() {
+            setTimeout(updateCharCount, 10);
+        });
+
+        // Form validation
+        document.getElementById('add-chunk-form').addEventListener('submit', function(e) {
+            const text = textarea.value.trim();
+            if (!text) {
+                e.preventDefault();
+                alert('Please enter some text for the chunk.');
+                textarea.focus();
+                return false;
+            }
+            
+            if (text.length < 5) {
+                e.preventDefault();
+                alert('Text must be at least 5 characters long.');
+                textarea.focus();
+                return false;
+            }
+        });
+
+        // Focus on textarea when page loads
+        window.onload = function() {
+            textarea.focus();
+        };
+    </script>
+</body>
+</html> 

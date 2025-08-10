@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recording Statistics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #2980b9;
+        }
+        .nav a.active {
+            background-color: #e74c3c;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            font-size: 1.1em;
+            color: #7f8c8d;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .section-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .speakers-table, .daily-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .speakers-table th, .speakers-table td,
+        .daily-table th, .daily-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .speakers-table th, .daily-table th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        .speakers-table tr:hover, .daily-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            transition: width 0.3s ease;
+        }
+        .top-performers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .performer-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .performer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .performer-item:last-child {
+            border-bottom: none;
+        }
+        .performer-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .performer-value {
+            color: #3498db;
+            font-weight: bold;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-item .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .summary-item .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .badge-recordings {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .badge-characters {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+        .badge-days {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            .top-performers {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Recording Statistics & Analytics</h1>
+        <p>Comprehensive overview of recording activities and speaker performance</p>
+    </div>
+
+    <div class="nav">
+        <a href="{{ url_for('admin_dashboard') }}">← Admin Dashboard</a>
+        <a href="{{ url_for('view_chunks') }}">Manage Chunks</a>
+        <a href="{{ url_for('view_chunks_with_audio') }}">View with Audio</a>
+        <a href="{{ url_for('view_stats') }}" class="active">📊 Statistics</a>
+        <a href="{{ url_for('database_interface') }}">🗄️ Database</a>
+        <a href="{{ url_for('export_tsv') }}">Export Data</a>
+        <a href="{{ url_for('admin_logout') }}" style="background-color: #e74c3c;">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Basic Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ basic_stats.total }}</div>
+            <div class="stat-label">Total Chunks</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ basic_stats.completed }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ basic_stats.pending }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ basic_stats.available }}</div>
+            <div class="stat-label">Available</div>
+        </div>
+    </div>
+
+    {% if stats.overall_stats %}
+    <!-- Overall Recording Statistics -->
+    <div class="section-card full-width">
+        <h3>📈 Overall Recording Statistics</h3>
+        <div class="summary-stats">
+            <div class="summary-item">
+                <div class="value">{{ stats.overall_stats[0] or 0 }}</div>
+                <div class="label">Unique Speakers</div>
+            </div>
+            <div class="summary-item">
+                <div class="value">{{ "{:,}".format(stats.overall_stats[2] or 0) }}</div>
+                <div class="label">Total Characters</div>
+            </div>
+            <div class="summary-item">
+                <div class="value">{{ "%.1f"|format(stats.overall_stats[3] or 0) }}</div>
+                <div class="label">Avg Characters/Chunk</div>
+            </div>
+            <div class="summary-item">
+                <div class="value">
+                    {% if stats.overall_stats[4] %}
+                        {{ stats.overall_stats[4].strftime('%Y-%m-%d') }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="label">First Recording</div>
+            </div>
+            <div class="summary-item">
+                <div class="value">
+                    {% if stats.overall_stats[5] %}
+                        {{ stats.overall_stats[5].strftime('%Y-%m-%d') }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="label">Latest Recording</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="content-grid">
+        <!-- Speaker Statistics -->
+        <div class="section-card">
+            <h3>👥 Speaker Performance</h3>
+            {% if stats.speaker_stats %}
+                <table class="speakers-table">
+                    <thead>
+                        <tr>
+                            <th>Speaker</th>
+                            <th>Recordings</th>
+                            <th>Characters</th>
+                            <th>Days Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for speaker in stats.speaker_stats[:15] %}
+                        <tr>
+                            <td>
+                                <strong>{{ speaker[0] }}</strong>
+                                <div style="font-size: 0.8em; color: #7f8c8d;">
+                                    {% if speaker[4] and speaker[5] %}
+                                        {{ speaker[4].strftime('%m/%d') }} - {{ speaker[5].strftime('%m/%d') }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-recordings">{{ speaker[1] }}</span>
+                                {% if stats.speaker_stats %}
+                                    {% set max_recordings = stats.speaker_stats[0][1] %}
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {{ (speaker[1] / max_recordings * 100)|round(1) }}%"></div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-characters">{{ "{:,}".format(speaker[2] or 0) }}</span>
+                                <div style="font-size: 0.8em; color: #7f8c8d;">
+                                    Avg: {{ "%.0f"|format(speaker[3] or 0) }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-days">{{ speaker[6] or 0 }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <p>No speaker data available yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Top Performers -->
+        <div class="section-card">
+            <h3>🏆 Top Performers</h3>
+            <div class="top-performers">
+                <div>
+                    <h4 style="color: #3498db; margin-bottom: 15px;">By Recording Count</h4>
+                    <div class="performer-list">
+                        {% for performer in stats.top_by_count[:5] %}
+                        <div class="performer-item">
+                            <span class="performer-name">{{ performer[0] }}</span>
+                            <span class="performer-value">{{ performer[1] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <h4 style="color: #27ae60; margin-bottom: 15px;">By Characters</h4>
+                    <div class="performer-list">
+                        {% for performer in stats.top_by_characters[:5] %}
+                        <div class="performer-item">
+                            <span class="performer-name">{{ performer[0] }}</span>
+                            <span class="performer-value">{{ "{:,}".format(performer[1] or 0) }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Activity -->
+    <div class="section-card full-width">
+        <h3>📅 Daily Recording Activity (Last 30 Days)</h3>
+        {% if stats.daily_stats %}
+            <table class="daily-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Recordings</th>
+                        <th>Unique Speakers</th>
+                        <th>Total Characters</th>
+                        <th>Activity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in stats.daily_stats %}
+                    <tr>
+                        <td>
+                            <strong>{{ day[0].strftime('%Y-%m-%d') }}</strong>
+                            <div style="font-size: 0.8em; color: #7f8c8d;">
+                                {{ day[0].strftime('%A') }}
+                            </div>
+                        </td>
+                        <td>{{ day[1] }}</td>
+                        <td>{{ day[2] }}</td>
+                        <td>{{ "{:,}".format(day[3] or 0) }}</td>
+                        <td>
+                            {% set max_daily = stats.daily_stats[0][1] if stats.daily_stats else 1 %}
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ (day[1] / max_daily * 100)|round(1) }}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>No daily activity data available yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html> 

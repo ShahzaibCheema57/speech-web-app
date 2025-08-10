@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flask List Rendering</title>
+  <style>
+    /* Base Styling */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    /* Recorder List Styling */
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    ul li {
+      margin: 8px 0;
+    }
+    
+    ul li a {
+      text-decoration: none;
+      color: #007bff;
+      transition: color 0.3s;
+    }
+    
+    ul li a:hover {
+      color: #0056b3;
+    }
+
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    /* Alternate Row Colors */
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    
+    /* Hide the chunk ID column */
+    /*.chunk-id-column {
+      display: none;
+    }
+    */
+    /* Filters Styling */
+    .filters {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .filters label {
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    
+    .filters select {
+      padding: 5px;
+      margin-right: 20px;
+    }
+    
+    /* Button Styling */
+    button {
+      display: block;
+      width: 200px;
+      margin: 20px auto;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    button:hover {
+      background-color: #218838;
+    }
+    
+    /* Pagination Styling */
+    .pagination {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .pagination a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    
+    .pagination a:hover {
+      color: #0056b3;
+    }
+    
+    .pagination p {
+      display: inline;
+      margin: 0 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% if recorder_list | length > 0 %}
+      <h1>List of Recorders</h1>
+      <ul>
+        {% for name in recorder_list %}
+          <li><a href="{{ url_for('recorder_details', name=name) }}">{{ name }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    
+    {% if recorder_name %}
+      <h1>{{ recorder_name }} Recordings</h1>
+      
+      {% if not hide_columns %}    
+      <div class="filters">
+        <label for="qa-filter">QA Check:</label>
+        <select id="qa-filter" onchange="filterTable()">
+          <option value="all">All</option>
+          <option value="done">Done</option>
+          <option value="pending">Pending</option>
+        </select>
+        
+        <label for="payment-filter">Payment Status:</label>
+        <select id="payment-filter" onchange="filterTable()">
+          <option value="all">All</option>
+          <option value="done">Done</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+      {% endif %}
+      
+      <form id="recording-form">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Text</th>
+              <th class="chunk-id-column">Chunk ID</th>
+              <th>Audio Path</th>
+              {% if not hide_columns %}    
+              <th>QA Check</th>
+              <th>Payment Status</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody id="recording-table">
+            {% for text, chunk_id, audio_path, recording, qa_check, payment in records %}
+            <tr data-qa="{{ 'done' if qa_check == 'done' else 'pending' }}" data-payment="{{ 'done' if payment == 'done' else 'pending' }}">
+              <td>{{loop.index}}</td>
+              <td>{{ text }}</td>
+              <td class="chunk-id-column">{{ chunk_id }}</td>
+              <td>
+                <audio controls>
+                  <source src="{{ url_for('uploaded_file', filename=audio_path.split('/')[-1]) }}" type="audio/wav">
+                  Your browser does not support the audio element.
+                </audio>
+              </td>
+              {% if not hide_columns %}    
+              <td>
+                <input type="checkbox" class="qa_check" data-chunk-id="{{ chunk_id }}" {% if qa_check == 'done' %}checked{% endif %}>
+              </td>
+              <td>
+                <input type="checkbox" class="payment" data-chunk-id="{{ chunk_id }}" {% if payment == 'done' %}checked{% endif %}>
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        
+        {% if total_pages  %}
+        <div class="pagination">
+          <p>Total Completed Recordings: {{ total_records }}</p>
+          {% if page > 1 %}
+          <a href="{{ url_for('recorder_details', name=recorder_name, page=page-1) }}">Next</a>
+          {% endif %}
+          <p>Page {{ page }} of {{ total_pages }}</p>
+          {% if page < total_pages %}
+          <a href="{{ url_for('recorder_details', name=recorder_name, page=page+1) }}">Next</a>
+          {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if not hide_columns %}
+        <button type="button" onclick="submitForm()">Save Changes</button>
+        {% endif %}
+      </form>
+      
+      <script>
+        function filterTable() {
+          let qaFilter = document.getElementById("qa-filter").value;
+          let paymentFilter = document.getElementById("payment-filter").value;
+          let rows = document.querySelectorAll("#recording-table tr");
+          
+          rows.forEach(row => {
+            let qaStatus = row.getAttribute("data-qa");
+            let paymentStatus = row.getAttribute("data-payment");
+            let qaMatch = (qaFilter === "all" || qaStatus === qaFilter);
+            let paymentMatch = (paymentFilter === "all" || paymentStatus === paymentFilter);
+            
+            row.style.display = (qaMatch && paymentMatch) ? "table-row" : "none";
+          });
+        }
+      
+        function submitForm() {
+          let chunkIds = [];
+          let qaChecks = {};
+          let payments = {};
+      
+          document.querySelectorAll('.qa_check').forEach(checkbox => {
+            let chunkId = checkbox.getAttribute("data-chunk-id");
+            qaChecks[chunkId] = checkbox.checked ? "done" : "pending";
+            chunkIds.push(chunkId);
+          });
+      
+          document.querySelectorAll('.payment').forEach(checkbox => {
+            let chunkId = checkbox.getAttribute("data-chunk-id");
+            payments[chunkId] = checkbox.checked ? "done" : "pending";
+          });
+      
+          fetch("{{ url_for('recorder_details', name=recorder_name) }}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              chunk_ids: chunkIds,
+              qa_checks: qaChecks,
+              payments: payments
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            alert("Data saved successfully!");
+            console.log(data);
+          })
+          .catch(error => {
+            console.error("Error:", error);
+          });
+        }
+      </script>
+    {% endif %}
+  </div>
+</body>
+</html>

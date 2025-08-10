@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recording Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .admin-link {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .name-section {
+            background: #f8f9fa;
+        }
+
+        .name-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .saved-indicator {
+            margin-top: 8px;
+            color: #28a745;
+            font-size: 14px;
+            display: none;
+        }
+
+        .text-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .text-display {
+            font-size: 1.1em;
+            line-height: 1.5;
+            color: #495057;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .chunk-info {
+            margin-top: 8px;
+            color: #6c757d;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .recording-section {
+            text-align: center;
+        }
+
+        .recording-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .recording-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 14px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            min-width: 140px;
+        }
+
+        .btn-record {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-record:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(238, 90, 82, 0.3);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(254, 202, 87, 0.3);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #5f27cd, #341f97);
+            color: white;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(95, 39, 205, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .audio-preview {
+            margin: 15px 0;
+            display: none;
+        }
+
+        .audio-preview audio {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 8px;
+        }
+
+        .recording-status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            display: none;
+        }
+
+        .recording-status.recording {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        .recording-status.stopped {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #00b894, #00a085);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #e17055, #d63031);
+        }
+
+        .toast.info {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .recording-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{{ url_for('admin_dashboard') }}" class="admin-link">🛠️ Admin</a>
+            <h1>🎙️ Audio Recording</h1>
+        </div>
+
+        <div class="content">
+            <!-- Name Section -->
+            <div class="section name-section">
+                <h3>👤 Your Name</h3>
+                <input type="text" id="name" class="name-input" placeholder="Enter your name..." required>
+                <div id="saved-indicator" class="saved-indicator">✅ Saved automatically</div>
+            </div>
+
+            <!-- Text Section -->
+            <div class="section text-section">
+                <h3>📝 Text to Record</h3>
+                <div class="text-display" id="text-display">{{ text }}</div>
+                <div class="chunk-info">
+                    Chunk {{ chunk_id }} • <span id="text-length"></span> characters
+                </div>
+            </div>
+
+            <!-- Recording Section -->
+            <div class="section recording-section">
+                <h3>🎙️ Recording</h3>
+                
+                <div class="recording-status" id="recording-status"></div>
+                
+                <div class="recording-controls">
+                    <button type="button" id="start-recording" class="btn btn-record">
+                        🔴 Start
+                    </button>
+                    <button type="button" id="stop-recording" class="btn btn-stop" disabled>
+                        ⏹️ Stop
+                    </button>
+                </div>
+
+                <div class="audio-preview" id="audio-preview">
+                    <audio controls></audio>
+                </div>
+
+                <form id="upload-form" enctype="multipart/form-data" method="POST">
+                    <input type="hidden" id="chunk_id" name="chunk_id" value="{{ chunk_id }}">
+                    <input type="hidden" id="hidden-name" name="name">
+                    
+                    <button type="submit" id="submit-btn" class="btn btn-submit" disabled>
+                        🚀 Submit Recording
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // DOM Elements
+        const nameInput = document.getElementById("name");
+        const savedIndicator = document.getElementById("saved-indicator");
+        const startRecordingBtn = document.getElementById("start-recording");
+        const stopRecordingBtn = document.getElementById("stop-recording");
+        const audioPreview = document.getElementById("audio-preview");
+        const submitBtn = document.getElementById("submit-btn");
+        const recordingStatus = document.getElementById("recording-status");
+        const textLength = document.getElementById("text-length");
+        const uploadForm = document.getElementById("upload-form");
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedName();
+            updateTextLength();
+            updateSubmitButtonState();
+        });
+
+        // Calculate and display text length
+        function updateTextLength() {
+            const text = document.getElementById("text-display").textContent;
+            textLength.textContent = text.length;
+        }
+
+        // Auto-save name to localStorage
+        function autoSaveName() {
+            const name = nameInput.value.trim();
+            if (name) {
+                localStorage.setItem('recorderName', name);
+                savedIndicator.style.display = 'block';
+                updateSubmitButtonState();
+            } else {
+                savedIndicator.style.display = 'none';
+                updateSubmitButtonState();
+            }
+        }
+
+        function loadSavedName() {
+            const savedName = localStorage.getItem('recorderName');
+            if (savedName) {
+                nameInput.value = savedName;
+                savedIndicator.style.display = 'block';
+            }
+            // Always update submit button state after loading
+            updateSubmitButtonState();
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            // Remove existing toast if any
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                document.body.removeChild(existingToast);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Hide and remove toast
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Update submit button state
+        function updateSubmitButtonState() {
+            const hasName = nameInput.value.trim() !== '';
+            const hasAudio = audioChunks.length > 0;
+            submitBtn.disabled = !(hasName && hasAudio);
+        }
+
+        // Event Listeners
+        nameInput.addEventListener('input', autoSaveName);
+        nameInput.addEventListener('blur', autoSaveName);
+
+        // Recording functionality
+        startRecordingBtn.addEventListener("click", async () => {
+            audioChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 16000
+                    }
+                });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.start();
+                isRecording = true;
+
+                // Update UI
+                startRecordingBtn.disabled = true;
+                stopRecordingBtn.disabled = false;
+                recordingStatus.textContent = "🔴 Recording...";
+                recordingStatus.className = "recording-status recording";
+                audioPreview.style.display = "none";
+                
+                // Reset audio chunks and update submit state
+                updateSubmitButtonState();
+                showToast('Recording started', 'success');
+            } catch (error) {
+                showToast("Microphone error: " + error.message, 'error');
+            }
+        });
+
+        stopRecordingBtn.addEventListener("click", () => {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                    const audioURL = URL.createObjectURL(audioBlob);
+                    const audioElement = audioPreview.querySelector('audio');
+                    audioElement.src = audioURL;
+                    audioPreview.style.display = "block";
+                    
+                    // Stop all tracks
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    
+                    // Update submit button state after audio is ready
+                    updateSubmitButtonState();
+                };
+
+                isRecording = false;
+                startRecordingBtn.disabled = false;
+                stopRecordingBtn.disabled = true;
+                recordingStatus.textContent = "✅ Recording completed";
+                recordingStatus.className = "recording-status stopped";
+                
+                showToast('Recording completed', 'success');
+            }
+        });
+
+        // Form submission
+        uploadForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast("Please enter your name", 'error');
+                nameInput.focus();
+                return;
+            }
+
+            if (audioChunks.length === 0) {
+                showToast("Please record audio first", 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("chunk_id", document.getElementById("chunk_id").value);
+
+            const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+            formData.append("audio", audioBlob, "recording.wav");
+
+            // Show uploading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Uploading...';
+
+            fetch("/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Upload successful! Loading next...', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('Upload failed');
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                showToast('Upload failed. Try again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Submit Recording';
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === ' ' && e.target !== nameInput) {
+                e.preventDefault();
+                if (!isRecording && !startRecordingBtn.disabled) {
+                    startRecordingBtn.click();
+                } else if (isRecording && !stopRecordingBtn.disabled) {
+                    stopRecordingBtn.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+

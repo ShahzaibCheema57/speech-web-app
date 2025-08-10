@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Management Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #2980b9;
+        }
+        .nav a.active {
+            background-color: #e74c3c;
+        }
+        .query-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .query-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .query-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .query-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .query-type {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .query-type input[type="radio"] {
+            margin-right: 5px;
+        }
+        .query-type label {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .query-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .query-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #27ae60;
+        }
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e8880b;
+        }
+        .common-queries {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .common-queries h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .query-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .query-btn {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .query-btn:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        .results-section {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .results-header {
+            background-color: #34495e;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .results-info {
+            font-size: 14px;
+        }
+        .execution-time {
+            background-color: #27ae60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .results-table {
+            max-height: 600px;
+            overflow: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+            vertical-align: top;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .no-results {
+            padding: 40px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .flash-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeaa7;
+        }
+        .warning-box h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+            }
+            .query-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .query-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗄️ Database Management Interface</h1>
+        <p>Execute SQL queries and manage your database remotely</p>
+    </div>
+
+    <div class="nav">
+        <a href="{{ url_for('admin_dashboard') }}">← Admin Dashboard</a>
+        <a href="{{ url_for('view_chunks') }}">Manage Chunks</a>
+        <a href="{{ url_for('view_chunks_with_audio') }}">View with Audio</a>
+        <a href="{{ url_for('view_stats') }}">📊 Statistics</a>
+        <a href="{{ url_for('database_interface') }}" class="active">🗄️ Database</a>
+        <a href="{{ url_for('export_tsv') }}">Export Data</a>
+        <a href="{{ url_for('admin_logout') }}" style="background-color: #e74c3c;">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if error_message %}
+    <div class="error-message">
+        <strong>Query Error:</strong> {{ error_message }}
+    </div>
+    {% endif %}
+
+    <div class="warning-box">
+        <h4>⚠️ Important Safety Information</h4>
+        <ul>
+            <li><strong>Read-Only Mode:</strong> Only SELECT queries are allowed (recommended for exploration)</li>
+            <li><strong>Full Access Mode:</strong> All queries allowed - use with extreme caution!</li>
+            <li>Results are limited to 1000 rows maximum</li>
+            <li>Always backup your database before running modification queries</li>
+        </ul>
+    </div>
+
+    <!-- Common Queries Section -->
+    <div class="common-queries">
+        <h4>📋 Common Queries (Click to Use)</h4>
+        <div class="query-buttons">
+            {% for name, query in common_queries.items() %}
+            <button class="query-btn" onclick="setQuery(`{{ query }}`)">{{ name }}</button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Query Input Section -->
+    <div class="query-section">
+        <h3>💻 SQL Query Interface</h3>
+        <form method="POST" class="query-form">
+            <div class="query-controls">
+                <div class="query-type">
+                    <input type="radio" id="read_only" name="query_type" value="read_only" checked>
+                    <label for="read_only">🔒 Read-Only Mode</label>
+                </div>
+                <div class="query-type">
+                    <input type="radio" id="full_access" name="query_type" value="full_access">
+                    <label for="full_access">⚠️ Full Access Mode</label>
+                </div>
+                <button type="submit" class="btn btn-success">▶️ Execute Query</button>
+                <button type="button" class="btn btn-warning" onclick="clearQuery()">🗑️ Clear</button>
+            </div>
+            <textarea 
+                name="sql_query" 
+                id="sql_query"
+                class="query-textarea" 
+                placeholder="Enter your SQL query here...&#10;&#10;Examples:&#10;SELECT * FROM chunks LIMIT 10;&#10;SELECT recorder, COUNT(*) FROM chunks WHERE recording = 'done' GROUP BY recorder;"
+                required
+            ></textarea>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    {% if query_result or error_message %}
+    <div class="results-section">
+        <div class="results-header">
+            <div class="results-info">
+                {% if query_result %}
+                    Query Results: {{ query_result.row_count }} rows
+                {% else %}
+                    Query Failed
+                {% endif %}
+            </div>
+            {% if execution_time %}
+            <div class="execution-time">
+                ⏱️ {{ execution_time }}ms
+            </div>
+            {% endif %}
+        </div>
+
+        {% if query_result and query_result.columns %}
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        {% for column in query_result.columns %}
+                        <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in query_result.rows %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell if cell is not none else 'NULL' }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif query_result %}
+        <div class="no-results">
+            <p>Query executed successfully but returned no data.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <script>
+        function setQuery(query) {
+            document.getElementById('sql_query').value = query;
+            document.getElementById('sql_query').focus();
+        }
+
+        function clearQuery() {
+            document.getElementById('sql_query').value = '';
+            document.getElementById('sql_query').focus();
+        }
+
+        // Add keyboard shortcut for query execution
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                document.querySelector('form').submit();
+            }
+        });
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('sql_query');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(150, this.scrollHeight) + 'px';
+        });
+
+        // Highlight full access mode warning
+        const fullAccessRadio = document.getElementById('full_access');
+        const readOnlyRadio = document.getElementById('read_only');
+        
+        fullAccessRadio.addEventListener('change', function() {
+            if (this.checked) {
+                if (!confirm('⚠️ Warning: Full Access Mode allows modification queries that can alter or delete data.\n\nAre you sure you want to enable this mode?')) {
+                    readOnlyRadio.checked = true;
+                }
+            }
+        });
+
+        // Add syntax highlighting class for better visibility
+        textarea.addEventListener('input', function() {
+            // Basic SQL keyword highlighting could be added here
+            // For now, just ensure proper formatting
+        });
+    </script>
+</body>
+</html> 
